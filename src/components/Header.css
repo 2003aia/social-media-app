@@ -1,0 +1,9 @@
+.header {
+  width: 100%;
+  max-width: 800px;
+  min-width: 300px;
+  /* position: relative; */
+  /* margin: auto; */
+  background-color: rgb(255, 255, 255);
+  border-bottom: 1px solid rgb(196, 196, 196);
+}
