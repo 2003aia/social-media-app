@@ -4,7 +4,7 @@
   max-width: 250px;
   min-width: 150px;
   height: 100vh;
-  z-index: 10000;
+  z-index: 10;
   position: "fixed",
 }
 
@@ -13,7 +13,7 @@
   width: 250px;
   background-color: rgb(255, 255, 255);
   border-left: 4px solid #eee;
-  z-index: 10000;
+  z-index: 10;
   width: 100%;
   max-width: 250px;
   min-width: 150px;

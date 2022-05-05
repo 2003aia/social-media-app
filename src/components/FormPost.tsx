@@ -1,22 +1,20 @@
-import { Formik, Form, Field } from "formik";
 import { useRef, useState } from "react";
-
 import { styled } from "@mui/material/styles";
-import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import PhotoCamera from "@mui/icons-material/PhotoCamera";
-import Stack from "@mui/material/Stack";
-import PanoramaIcon from "@mui/icons-material/Panorama";
-import { CircularProgress, TextField } from "@mui/material";
-import { ImagesearchRoller } from "@mui/icons-material";
+import { Clear, PanoramaVertical, Image } from "@mui/icons-material";
+import {
+  CircularProgress,
+  TextField,
+  CardMedia,
+  IconButton,
+  Button,
+  Avatar,
+} from "@mui/material";
 import { getDownloadURL, ref, uploadBytes } from "@firebase/storage";
 import { auth, firestore, storage } from "../firebase";
 import { collection, doc, setDoc } from "@firebase/firestore";
-import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-/* import { TUser } from '../redux/post' */
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import moment from "moment";
+import { useForm } from "react-hook-form";
 
 const Input = styled("input")({
   display: "none",
@@ -28,7 +26,11 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
   const formRef: any = useRef<HTMLHeadingElement>();
   const userData = Object(user);
   const [loading, setLoading] = useState(false);
-
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
   const uploadImage = async () => {
     if (image == null) {
       return null;
@@ -53,7 +55,7 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
     }
   };
 
-  const createPost = async () => {
+  const createPost = async (data: any) => {
     setLoading(true);
     let image_url: any = await uploadImage();
     if (image_url == null && image) {
@@ -62,21 +64,16 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
     if (auth.currentUser?.uid !== undefined) {
       const id = auth.currentUser?.uid;
       const postRef = doc(collection(firestore, "posts"));
-      console.log("values form", {
-        ...formRef?.current?.values,
-        image_url: image_url,
-      });
+
       await setDoc(postRef, {
-        ...formRef?.current?.values,
+        text: data.text,
         image_url: image_url,
         image_name: image?.name == undefined ? null : image?.name,
         user_id: auth.currentUser?.uid,
-        author_nickname:
-          userData?.nickname == undefined ? null : userData?.nickname,
+        author_name: userData?.name == undefined ? null : userData?.name,
         avatar: userData?.avatar == undefined ? null : userData?.avatar,
         created: new Date().toISOString(),
       }).then(() => {
-        console.log("created");
         setLoading(false);
         setOpenCreatePost(false);
       });
@@ -85,92 +82,77 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
 
   return (
     <div style={{ padding: 10 }}>
-      <div
-        style={{ display: "flex", overflow: "auto", justifyContent: "center" }}
-      >
-        {image !== null ? (
-          <div
-            style={{
-              width: 300,
-              height: 300,
-              display: "flex",
-              justifyContent: "space-evenly",
-            }}
-          >
-            <img
-              style={{ width: 200, height: 400 }}
-              alt="imagePost"
-              src={
-                image !== null && image !== undefined
-                  ? URL.createObjectURL(
-                      image !== undefined || null ? image : ""
-                    )
-                  : ""
-              }
-            />
-          </div>
+      <div style={{ display: "flex", justifyContent: "space-evenly" }}>
+        <Avatar
+          sx={{ width: 50, height: 50 }}
+          alt="userAvatar"
+          src={userData?.avatar && "/broken-image.jpg"}
+        />
+        <TextField
+          error={errors.text && true}
+          maxRows={4}
+          multiline={true}
+          variant="standard"
+          helperText={errors.text && "заполните поле"}
+          fullWidth
+          {...register("text", { required: true })}
+          label="text"
+          placeholder="text"
+        />
+
+        {loading == true ? (
+          <CircularProgress />
         ) : (
-          <PanoramaIcon sx={{ width: 200, height: 200, color: "#e0e0e0" }} />
+          <Button
+            variant="contained"
+            onClick={handleSubmit(createPost)}
+          >
+            post
+          </Button>
         )}
       </div>
+      <label style={{ width: "100%" }} htmlFor="contained-button-file">
+        <Input
+          id="contained-button-file"
+          name="file"
+          onChange={(e: any) => {
+            const files: any = e.target.files[0];
 
-      <Formik
-        initialValues={{
-          text: "",
-        }}
-        onSubmit={(values) => {
-          createPost();
-          console.log(values, "values");
-        }}
-        innerRef={formRef}
-      >
-        <Form>
-          <Field
-            maxRows={4}
-            multiline={true}
-            variant="standard"
-            fullWidth
-            label="text"
-            as={TextField}
-            name="text"
-            placeholder="text"
+            setImage(files);
+          }}
+          accept="image/*"
+          type="file"
+        />
+        <IconButton color="inherit" component="span">
+          <Image />
+        </IconButton>
+      </label>
+      {image !== null ? (
+        <div
+          style={{
+            width: 300,
+            height: 300,
+            display: "flex",
+            justifyContent: "space-evenly",
+          }}
+        >
+          <CardMedia
+            sx={{ borderRadius: 6, marginTop: 1 }}
+            component="img"
+            image={
+              image !== null && image !== undefined
+                ? URL.createObjectURL(image !== undefined || null ? image : "")
+                : ""
+            }
+            alt="image"
           />
-          <br />
-          <br />
-          <label style={{ width: "100%" }} htmlFor="contained-button-file">
-            <Input
-              id="contained-button-file"
-              name="file"
-              onChange={(e: any) => {
-                /*  setImage(e.target.files) */
-                const files: any = e.target.files[0];
-
-                setImage(files);
-              }}
-              accept="image/*"
-              multiple
-              type="file"
-            />
-            <Button
-              fullWidth
-              variant="contained"
-              color="inherit"
-              component="span"
-            >
-              Upload image
-            </Button>
-          </label>
-          <br />
-          <br />
-          {loading == true ? (
-            <CircularProgress />
-          ) : (
-            <Button variant="contained" color="success" type="submit" fullWidth>
-              post
-            </Button>
-          )}
-        </Form>
-      </Formik>
+          <div>
+            <IconButton onClick={() => setImage(null)}>
+              <Clear />
+            </IconButton>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

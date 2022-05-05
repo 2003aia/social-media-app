@@ -3,7 +3,6 @@ import {
   Modal,
   Paper,
   Button,
-  Box,
   CardMedia,
   Tabs,
   Tab,
@@ -30,32 +29,8 @@ import { ProfileEdit } from "./ProfileEdit";
 import { useSelector } from "react-redux";
 import { useAppSelector } from "../redux/hooks";
 import styles from "./Profile.module.css";
+import { TabPanel } from "./ProfileTabPanel";
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 2 }}>
-          <div>{children}</div>
-        </Box>
-      )}
-    </div>
-  );
-}
 interface iPosts {
   text: string;
   id: string;
@@ -72,7 +47,7 @@ export const Profile: FC<IProfile> = () => {
     setValue(newValue);
   };
   const [openCreatePost, setOpenCreatePost] = useState(false);
-  const open = Boolean(anchorEl);
+  
   const [userPosts, setUserPosts] = useState([]);
   const user = useAppSelector((data) => data.post.user);
 
@@ -97,6 +72,8 @@ export const Profile: FC<IProfile> = () => {
     }
   }, []);
 
+  
+
   return (
     <div className={styles.profile}>
       {user.avatar ? (
@@ -111,7 +88,6 @@ export const Profile: FC<IProfile> = () => {
       ) : (
         <div className={styles.headerPicture}></div>
       )}
-
       <div className={styles.first}>
         <div className={styles.avatarWrapper}>
           {image !== null ? (
@@ -135,12 +111,6 @@ export const Profile: FC<IProfile> = () => {
               src={user?.avatar && "/broken-image.jpg"}
             />
           )}
-          {/* <ProfileEdit
-          setEdit={setEdit}
-          edit={edit}
-          image={image}
-          setImage={setImage}
-        /> */}
 
           <Button
             className={styles.button}
@@ -154,20 +124,24 @@ export const Profile: FC<IProfile> = () => {
         </div>
         <div className={styles.info}>
           <p className={styles.infoText} style={{ fontWeight: "bold" }}>
-            {user.nickname}
+            {user.name}
           </p>
-          <p className={styles.infoText}>@fdj</p>
-          <p className={styles.infoText}> Born May 15, 2003</p>
-          <p className={styles.infoText}>Joined 234354</p>
+          <p className={styles.infoText}>
+            Born
+            {user?.birthDate}
+          </p>
+          <p className={styles.infoText}>
+            Joined
+            {user.created}
+          </p>
           <span className={styles.infoText}>
-            <span style={{ fontWeight: "bold" }}>22</span> following
+            <span style={{ fontWeight: "bold" }}>{user.following}</span> following
           </span>
           <span className={styles.infoText}>
-            <span style={{ fontWeight: "bold" }}>0</span> followers
+            <span style={{ fontWeight: "bold" }}>{user.followers}</span> followers
           </span>
         </div>
       </div>
-
       <div className={styles.second}>
         <Tabs
           indicatorColor="primary"
@@ -195,7 +169,7 @@ export const Profile: FC<IProfile> = () => {
         </Tabs>
 
         <TabPanel value={value} index={0}>
-          <Button
+          {/* <Button
             variant="outlined"
             fullWidth
             onClick={(e) => {
@@ -203,26 +177,7 @@ export const Profile: FC<IProfile> = () => {
             }}
           >
             new post
-          </Button>
-          <Modal
-            sx={{ zIndex: 200000 }}
-            open={openCreatePost}
-            onClose={() => setOpenCreatePost(false)}
-          >
-            <Paper
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                width: "auto",
-                boxShadow: 24,
-                p: 4,
-              }}
-            >
-              <FormPost setOpenCreatePost={setOpenCreatePost} />
-            </Paper>
-          </Modal>
+          </Button> */}
 
           <PostList posts={userPosts} />
         </TabPanel>
@@ -232,7 +187,32 @@ export const Profile: FC<IProfile> = () => {
         <TabPanel value={value} index={2}>
           Item Three
         </TabPanel>
-      </div>
+      </div>{" "}
+      <ProfileEdit
+        setEdit={setEdit}
+        edit={edit}
+        image={image}
+        setImage={setImage}
+      />{" "}
+      <Modal
+        sx={{ zIndex: 200000 }}
+        open={openCreatePost}
+        onClose={() => setOpenCreatePost(false)}
+      >
+        <Paper
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "auto",
+            boxShadow: 24,
+            p: 4,
+          }}
+        >
+          <FormPost setOpenCreatePost={setOpenCreatePost} />
+        </Paper>
+      </Modal>
     </div>
   );
 };

@@ -2,12 +2,10 @@ import "../App.css";
 import { Link } from "react-router-dom";
 import { auth, firestore } from "../firebase";
 import {
-  Box,
   Button,
   ListItemText,
   ListItemIcon,
   ListItem,
-  Divider,
   Toolbar,
   List,
 } from "@mui/material";
@@ -82,13 +80,12 @@ export const Sidebar = ({ visible, setVisible, open, setOpen }: any) => {
           <ListItemText primary="Profile" />
         </ListItem>
       </Link>
-      <Link to={"/profile/"}>
-        <ListItem button key="newpost">
-          <Button variant="contained" color="primary" fullWidth>
-            new post
-          </Button>
-        </ListItem>
-      </Link>
+
+      <ListItem>
+        <Button variant="contained" color="primary" fullWidth>
+          new post
+        </Button>
+      </ListItem>
     </List>
   );
 };

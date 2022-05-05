@@ -1,136 +1,212 @@
 import React, { useState, useEffect } from "react";
-import "../App.css";
 import {
-  getAuth,
   createUserWithEmailAndPassword,
-  signOut,
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { auth, firestore } from "../firebase";
 import { setDoc, doc, collection, addDoc } from "firebase/firestore";
 import { Button, Card } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import IconButton from "@mui/material/IconButton";
+import Input from "@mui/material/Input";
+import { CircularProgress } from "@mui/material";
+import InputLabel from "@mui/material/InputLabel";
+import InputAdornment from "@mui/material/InputAdornment";
+import FormControl from "@mui/material/FormControl";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { TextField, Box } from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { MobileDatePicker } from "@mui/x-date-pickers/MobileDatePicker";
+import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import { ThemeProvider, createTheme } from "@mui/material";
 
 export const Signin = () => {
-  const [email, setEmail] = useState("");
-  const [pass, setPass] = useState("");
-  const [email2, setEmail2] = useState("");
-  const [pass2, setPass2] = useState("");
-  const [nickname, setNickname] = useState("");
-  const [age, setAge] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [birthDate, setBirthDate] = useState<Date | null>(new Date());
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+  const {
+    register: register2,
+    formState: { errors: errors2 },
+    handleSubmit: handleSubmit2,
+  } = useForm();
 
+  const signInHandler = (data: any) => {
+    setLoading(true);
+    const { email, name, password } = data;
+
+    createUserWithEmailAndPassword(auth, email, password).then(async () => {
+      if (auth.currentUser?.uid !== undefined) {
+        const id: any = auth.currentUser?.uid;
+
+        await setDoc(doc(firestore, "users", id), {
+          email: email,
+          name: name,
+          birthDate: birthDate?.toISOString(),
+          created: new Date().toISOString(),
+          following: 0,
+          followers: 0,
+        })
+          .then(() => {
+            setLoading(false);
+            navigate("/home/");
+          })
+          .catch((err) => {
+            setLoading(false);
+            console.log(err);
+          });
+      }
+    });
+  };
+
+  const loginHandler = (data: any) => {
+    setLoading(true);
+    const { emailLogin, passwordLogin } = data;
+    signInWithEmailAndPassword(auth, emailLogin, passwordLogin)
+      .then(() => {
+        navigate("/");
+        setLoading(false);
+      })
+      .catch((err: any) => {
+        setLoading(false);
+        console.log(err, "signed in error");
+      });
+  };
 
   return (
-    <div className="ui container" style={{ background: "#fff" }}>
+    <div
+      style={{
+        width: "100%",
+        height: "100vh",
+        margin: "auto",
+        overflow: "auto",
+      }}
+    >
       <div
         style={{
-          marginTop: 30,
-          paddingBottom: 200,
-          display: "flex",
-          justifyContent: "center",
+          margin: "auto",
+          width: "228px",
+          height: "100vh",
         }}
       >
-        <Card>
-          <Card>
-            <h3>SignUp</h3>
+        <Box
+          component={"form"}
+          sx={{
+            "& .MuiTextField-root": { m: 1, width: "25ch" },
+          }}
+          autoComplete="off"
+        >
+          <h3>Sign Up</h3>
 
-            <form style={{ width: 300, marginTop: 30 }}>
-                <input
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                  }}
-                  placeholder="email"
-                />
-                <input
-                  value={nickname}
-                  onChange={(e) => {
-                    setNickname(e.target.value);
-                  }}
-                  placeholder="nickname"
-                />
+          <TextField
+            variant="standard"
+            type={"email"}
+            label="Email"
+            {...register("email", {
+              required: true,
+            })}
+          />
+          <TextField
+            variant="standard"
+            label="Name"
+            {...register("name", {
+              required: true,
+            })}
+          />
 
-                <input
-                  value={age}
-                  onChange={(e) => {
-                    setAge(e.target.value);
-                  }}
-                  placeholder="age"
-                />
-                <input
-                  value={pass}
-                  onChange={(e) => {
-                    setPass(e.target.value);
-                  }}
-                  placeholder="password"
-                />
-              <Card>
-                <div className="ui two buttons">
-                  <Button
-                    onClick={() => {
-                      createUserWithEmailAndPassword(auth, email, pass).then(
-                        async () => {
-                          if (auth.currentUser?.uid !== undefined) {
-                            const id: any = auth.currentUser?.uid;
-                            console.log("firestore");
-                            await setDoc(doc(firestore, "users", id), {
-                              email: email,
-                              nickname: nickname,
-                              age: age,
-                            })
-                              .then(() => {
-                                navigate("/home/");
-                              })
-                              .catch((err) => {
-                                if (err.code == "auth/email-already-exists") {
-                                  console.log("email already exists");
-                                }
-                              });
-                          }
-                        }
-                      );
-                    }}
+          <LocalizationProvider dateAdapter={AdapterMoment}>
+            <MobileDatePicker
+              label="Birth Date"
+              inputFormat="DD/MM/yyyy"
+              value={birthDate}
+              onChange={(val: Date | null) => setBirthDate(val)}
+              renderInput={(params) => (
+                <TextField variant="standard" {...params} />
+              )}
+            />
+          </LocalizationProvider>
+
+          <FormControl sx={{ m: 1, width: "25ch" }} variant="standard">
+            <InputLabel htmlFor="standard-adornment-password">
+              Password
+            </InputLabel>
+            <Input
+              id="standard-adornment-password"
+              type={showPassword ? "text" : "password"}
+              {...register("password", {
+                required: true,
+                minLength: 6,
+              })}
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={() => setShowPassword(true)}
+                    onMouseDown={() => setShowPassword(false)}
+                    edge="end"
                   >
-                    submit
-                  </Button>
-                </div>
-              </Card>
-            </form>
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              }
+            />
+            {}
+          </FormControl>
 
-            <h3 style={{ marginTop: 30 }}>Login</h3>
+          {loading ? (
+            <CircularProgress />
+          ) : (
+            <Button
+              sx={{ m: 1, width: "27ch" }}
+              onClick={handleSubmit(signInHandler)}
+              variant="outlined"
+              fullWidth
+              type="submit"
+            >
+              submit
+            </Button>
+          )}
+        </Box>
 
-            <form style={{ width: 300, marginTop: 30 }}>
-                <input
-                  value={email2}
-                  onChange={(e) => {
-                    setEmail2(e.target.value);
-                  }}
-                  placeholder="email"
-                />
-                <input
-                  value={pass2}
-                  onChange={(e) => {
-                    setPass2(e.target.value);
-                  }}
-                  placeholder="password"
-                />
-                <div className="ui two buttons">
-                  <Button
-                    onClick={() => {
-                      signInWithEmailAndPassword(auth, email2, pass2)
-                        .then(() => navigate("/home/"))
-                        .catch((err) => {
-                          console.log(err, "signed in error");
-                        });
-                    }}
-                  >
-                    submit
-                  </Button>
-                </div>
-            </form>
-          </Card>
-        </Card>
+        <Box
+          component={"form"}
+          sx={{
+            "& .MuiTextField-root": { m: 1, width: "25ch" },
+          }}
+          autoComplete="off"
+        >
+          <h3 style={{ marginTop: 30 }}>Login</h3>
+          <TextField
+            {...register2("emailLogin")}
+            label="Email"
+            variant="standard"
+          />
+          <TextField
+            {...register2("passwordLogin", {
+              required: true,
+              minLength: 6,
+              maxLength: 10,
+            })}
+            label="Password"
+            variant="standard"
+          />
+          <Button
+            sx={{ m: 1, width: "27ch" }}
+            onClick={handleSubmit2(loginHandler)}
+            variant="outlined"
+            type="submit"
+            fullWidth
+          >
+            submit
+          </Button>
+        </Box>
       </div>
     </div>
   );

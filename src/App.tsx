@@ -2,7 +2,6 @@ import React, { useState, useEffect, Fragment } from "react";
 import { auth, db, firestore } from "./firebase";
 import PostList from "./components/PostList";
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
-import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 
 import { Signin } from "./components/Signin";
@@ -21,7 +20,6 @@ import {
 import { useDispatch } from "react-redux";
 import { postData } from "./redux/post";
 import MessageList from "./components/MessageList";
-import { Container } from "@mui/material";
 import { useWindowDimensions } from "./hooks/window";
 import { Header } from "./components/Header";
 
@@ -35,34 +33,37 @@ function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const q = query(
-      collection(firestore, "posts"),
-      orderBy("created", "desc"),
-      limit(10)
-    );
+    const fetchPosts = async () => {
+      const q = query(
+        collection(firestore, "posts"),
+        orderBy("created", "desc"),
+        limit(10)
+      );
 
-    onSnapshot(q, (data) => {
-      const list: any = [];
-      data.forEach((doc) => {
-        console.log(doc.data().text, "doc");
-        list.push({ ...doc.data(), id: doc.id });
+      onSnapshot(q, (data) => {
+        const list: any = [];
+        data.forEach((doc) => {
+          list.push({ ...doc.data(), id: doc.id });
+        });
+        setPosts(list);
       });
-      console.log(list, "list");
-      setPosts(list);
-    });
+    };
+
     const fetchUser = async () => {
       if (auth.currentUser?.uid !== undefined) {
         const id = auth.currentUser?.uid;
         const userDoc = doc(firestore, "users", id);
 
         const userSnap: any = await getDoc(userDoc);
-        console.log(userSnap.data(), "usersnap");
+        
         if (userSnap.exists()) {
-          dispatch(postData(userSnap.data()));
+          dispatch(postData(userSnap.data())
         }
       }
     };
 
+
+    fetchPosts();
     fetchUser();
   }, [auth.currentUser?.uid]);
 
@@ -101,12 +102,7 @@ function App() {
         <Header />
         <Toolbar />
         <Routes>
-          <Route
-            path="/"
-            element={
-              <PostList posts={posts} currentId={currentId} index={index} />
-            }
-          />
+          <Route path="/" element={<PostList posts={posts} />} />
 
           <Route element={<Signin />} path="/login" />
           <Route element={<Profile posts={posts} />} path="/profile" />

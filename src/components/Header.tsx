@@ -22,7 +22,7 @@ export const Header = () => {
       <Toolbar
         sx={{
           position: "fixed",
-          zIndex: 1000,
+          zIndex: 1,
           maxWidth: 800,
           background: "#fff",
           minWidth: 300,
@@ -31,9 +31,6 @@ export const Header = () => {
           justifyContent: "space-between",
         }}
       >
-        <Typography variant="h6" component="div">
-          Home
-        </Typography>
         <Typography variant="h6" component="div">
           Home
         </Typography>

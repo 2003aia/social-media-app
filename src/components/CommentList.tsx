@@ -12,9 +12,6 @@ import {
 import React, { useState, useEffect, FC } from "react";
 import Post from "./Post";
 
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
 import { TPost } from "../types/types";
 import {
   collection,
@@ -35,7 +32,7 @@ import { useSelector } from "react-redux";
 import { useAppSelector } from "../redux/hooks";
 import CheckIcon from "@mui/icons-material/Check";
 import EditIcon from "@mui/icons-material/Edit";
-import { AccountCircle } from "@mui/icons-material";
+import { useForm } from "react-hook-form";
 
 const style = {
   position: "absolute" as "absolute",
@@ -47,17 +44,6 @@ const style = {
   boxShadow: 24,
   p: 4,
 };
-
-/* type TPost = {
-    avatar?: string,
-    text?: string,
-    likes: Array<string>,
-    created: string,
-    author_nickname: string,
-    image_name?: string,
-    image_url?: string,
-    user_id: string,
-} */
 
 interface iCommentList {
   open: boolean;
@@ -72,6 +58,11 @@ export const CommentList: FC<iCommentList> = ({ open, setOpen, id, post }) => {
   const [comments, setComments] = useState([]);
   const [message, setMessage] = useState("");
   const user = useAppSelector((data) => data.post.user);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
 
   useEffect(() => {
     const q = query(
@@ -88,6 +79,21 @@ export const CommentList: FC<iCommentList> = ({ open, setOpen, id, post }) => {
       setComments(list);
     });
   }, []);
+
+  const newCommentHandler = async (data: any) => {
+    const mesRef = doc(collection(firestore, `posts/${post.id}/comments`));
+    const postRef = doc(firestore, `posts`, post.id);
+    await setDoc(mesRef, {
+      author_avatar: user?.avatar !== undefined ? user.avatar : null,
+      author_id: auth.currentUser?.uid,
+      author_nickname: user.name,
+      message: data.message,
+      created: new Date().toISOString(),
+    });
+    await updateDoc(postRef, {
+      totalMessages: increment(1),
+    }).then(() => setMessage(""));
+  };
 
   return (
     <div
@@ -117,50 +123,26 @@ export const CommentList: FC<iCommentList> = ({ open, setOpen, id, post }) => {
             }}
           >
             <TextField
+              error={errors.message && true}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
                     <Avatar src={user?.avatar} sx={{ width: 25, height: 25 }}>
-                      {user?.nickname?.charAt(0)}
+                      {user?.name?.charAt(0)}
                     </Avatar>
                   </InputAdornment>
                 ),
               }}
-              value={message}
-              onChange={(e) => setMessage(e.currentTarget.value)}
+              {...register("message", { required: true })}
               fullWidth={true}
               style={{ marginLeft: 10 }}
-              label="create message"
+              label="new comment"
               variant="standard"
-              name="create"
+              helperText={errors.message && "заполните поле"}
             />
-            <IconButton
-              onClick={async () => {
-                const mesRef = doc(
-                  collection(firestore, `posts/${post.id}/comments`)
-                );
-                const postRef = doc(firestore, `posts`, post.id);
-                await setDoc(mesRef, {
-                  author_avatar: user?.avatar !== undefined ? user.avatar : null,
-                  author_id: auth.currentUser?.uid,
-                  author_nickname: user.nickname,
-                  message: message,
-                  created: new Date().toISOString(),
-                });
-                await updateDoc(postRef, {
-                  totalMessages: increment(1),
-                }).then(() => setMessage(""));
-              }}
-            >
-              {message !== "" ? (
-                <Tooltip title="save">
-                  <CheckIcon />
-                </Tooltip>
-              ) : (
-                <Tooltip title="create">
-                  <EditIcon />
-                </Tooltip>
-              )}
+
+            <IconButton onClick={handleSubmit(newCommentHandler)}>
+              <EditIcon />
             </IconButton>
           </div>
           <List

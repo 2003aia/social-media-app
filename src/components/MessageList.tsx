@@ -1,5 +1,3 @@
-import Post from "./Post";
-import { TPost } from ".././types/types";
 import styles from "../styles/message.module.css";
 import { Container } from "@mui/material";
 
