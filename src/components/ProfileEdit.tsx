@@ -3,6 +3,7 @@ import {
   FormControl,
   IconButton,
   Modal,
+  Box,
   Paper,
   TextField,
   Button,
@@ -18,6 +19,8 @@ import { storage } from "../firebase";
 import ClearIcon from "@mui/icons-material/Clear";
 import { useForm } from "react-hook-form";
 import { styled } from "@mui/material/styles";
+import { useDispatch } from "react-redux";
+import { postData, setRefresh } from "../redux/post";
 
 const Input = styled("input")({
   display: "none",
@@ -32,10 +35,11 @@ interface IProfileEdit {
 
 export const ProfileEdit: FC<IProfileEdit> = ({
   edit,
-  image,
-  setImage,
+  /* image,
+  setImage, */
   setEdit,
 }) => {
+  const [image, setImage]: any = useState(null);
   const user = useAppSelector((data: RootState) => data.post.user);
   const userData = Object(user);
   const {
@@ -43,11 +47,9 @@ export const ProfileEdit: FC<IProfileEdit> = ({
     handleSubmit,
     formState: { errors },
   } = useForm({
-    defaultValues: { name: userData?.nickname, email: userData?.email },
+    defaultValues: { name: userData?.name, email: userData?.email },
   });
-
-  const [email, setEmail] = useState(userData?.email);
-  const [nickname, setNickname] = useState(userData?.nickname);
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const uploadImage = async () => {
     if (image == null) {
@@ -56,9 +58,7 @@ export const ProfileEdit: FC<IProfileEdit> = ({
 
     const storageRef = ref(storage, `files/${auth.currentUser?.uid}/avatar`);
 
-    const uploadTask = uploadBytes(storageRef, image, {
-      contentType: "image/png",
-    });
+    const uploadTask = uploadBytes(storageRef, image);
 
     try {
       await uploadTask;
@@ -70,19 +70,29 @@ export const ProfileEdit: FC<IProfileEdit> = ({
     }
   };
 
-  const updateHandler = async () => {
+  const updateHandler = async (data: any) => {
     if (auth.currentUser?.uid !== undefined) {
       setLoading(true);
       let image_url: any = await uploadImage();
       if (image_url == null && image) {
         image_url = image;
       }
+
       const userRef = doc(firestore, "users", auth.currentUser?.uid);
       await updateDoc(userRef, {
-        email: email,
-        nickname: nickname,
-        avatar: /* user.avatar !== null ? user.avatar :  */ image_url,
+        email: data.email,
+        name: data.name,
+        avatar: image_url,
       }).then(() => {
+        dispatch(
+          postData({
+            ...user,
+            avatar: image !== null ? image : user.avatar,
+            email: data.email,
+            name: data.name,
+          })
+        );
+        /* dispatch(setRefresh(true)); */
         setLoading(false);
       });
     }
@@ -106,10 +116,19 @@ export const ProfileEdit: FC<IProfileEdit> = ({
           width: "auto",
           bgcolor: "background.paper",
           boxShadow: 24,
-          p: 4,
+/* 
+            height: 400,
+            overflow: "auto", */
+          p: 3,
         }}
       >
-        <FormControl sx={{ m: -1 }}>
+        <Box
+          sx={{
+            "& .MuiTextField-root": { m: 2, width: "25ch" },
+          }}
+          component="form"
+        >
+          {/*  <FormControl> */}
           <IconButton
             onClick={() => {
               setImage(null);
@@ -119,32 +138,25 @@ export const ProfileEdit: FC<IProfileEdit> = ({
           >
             <ClearIcon />
           </IconButton>
-          <div style={{marginBottom:20}}>
-            {image !== null ? (
-              <Avatar
-                sx={{ width: 190, height: 190 }}
-                alt="imagePost"
-                src={
-                  image !== null && image !== undefined
-                    ? URL.createObjectURL(
-                        image !== undefined || null ? image : ""
-                      )
-                    : ""
-                }
-              />
-            ) : (
-              <Avatar
-                sx={{ width: 190, height: 190 }}
-                alt="userAvatar"
-                src={userData?.avatar && "/broken-image.jpg"}
-              />
-            )}
-          </div>
+          {image !== null ? (
+            <Avatar
+              sx={{ width: 190, height: 190, margin: "auto", marginBottom: 2 }}
+              alt="imagePost"
+              src={URL.createObjectURL(
+                image !== undefined || null ? image : ""
+              )}
+            />
+          ) : (
+            <Avatar
+              sx={{ width: 190, height: 190, margin: "auto", marginBottom: 2 }}
+              alt="userAvatar"
+              src={userData?.avatar && "/broken-image.jpg"}
+            />
+          )}
 
           <label style={{ width: "100%" }} htmlFor="contained-button-file">
             <Input
               id="contained-button-file"
-              /* {...register("file")} */
               onChange={(e: any) => {
                 const files: any = e.target.files[0];
 
@@ -157,7 +169,7 @@ export const ProfileEdit: FC<IProfileEdit> = ({
             <Button
               fullWidth
               style={{ width: "100%" }}
-              variant="contained"
+              variant="outlined"
               component="span"
             >
               Upload image
@@ -170,10 +182,6 @@ export const ProfileEdit: FC<IProfileEdit> = ({
             label="email"
             variant="standard"
             {...register("email")}
-            /* value={email}
-            onChange={(e) => {
-              setEmail(e.currentTarget.value);
-            }} */
           />
           <br />
           <TextField
@@ -191,11 +199,12 @@ export const ProfileEdit: FC<IProfileEdit> = ({
               style={{ width: "100%" }}
               onClick={handleSubmit(updateHandler)}
               fullWidth
+              variant="contained"
             >
               submit
             </Button>
           )}
-        </FormControl>
+        </Box>
       </Paper>
     </Modal>
   );

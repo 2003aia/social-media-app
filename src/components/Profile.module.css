@@ -8,10 +8,14 @@
 }
 .first {
   background-color: #fff;
+  border-top-right-radius: 20px ;
+  border-top-left-radius: 20px ;
+
 }
 
 .second {
-  background-color: #fff;
+  background-color: rgb(255, 255, 255);
+  
 }
 .headerPicture {
   background-color: #eee;
@@ -40,21 +44,25 @@
   height: fit-content;
   width: 200px;
 }
-
+@media (max-width: 950px) {
+  .avatar {
+    top: -80px;
+  }
+  .info{
+    margin-top: -40px;
+  }
+  .button {
+    width: 128px;
+  }
+  .second{
+    padding-bottom: 50px;
+  }
+}
 .info {
   padding: 5px 20px;
 }
 .infoText {
   margin: 5px 10px;
   font-size: 14px;
-
 }
 
-@media (max-width: 1180px) {
-  .profile {
-  }
-}
-@media (max-width: 1180px) {
-  .profile {
-  }
-}

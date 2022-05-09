@@ -8,7 +8,7 @@ import {
   Tab,
 } from "@mui/material";
 import React, { FC, useEffect, useState } from "react";
-import PostList from "./PostList";
+import {PostList} from "./PostList";
 import PersonPinIcon from "@mui/icons-material/PersonPin";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import TextsmsOutlinedIcon from "@mui/icons-material/TextsmsOutlined";
@@ -30,6 +30,7 @@ import { useSelector } from "react-redux";
 import { useAppSelector } from "../redux/hooks";
 import styles from "./Profile.module.css";
 import { TabPanel } from "./ProfileTabPanel";
+import { useWindowDimensions } from "../hooks/window";
 
 interface iPosts {
   text: string;
@@ -41,13 +42,11 @@ interface IProfile {
 }
 export const Profile: FC<IProfile> = () => {
   const [value, setValue] = useState(0);
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [edit, setEdit] = useState(false);
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
-  const [openCreatePost, setOpenCreatePost] = useState(false);
-  
+  const { height, width } = useWindowDimensions();
   const [userPosts, setUserPosts] = useState([]);
   const user = useAppSelector((data) => data.post.user);
 
@@ -64,7 +63,6 @@ export const Profile: FC<IProfile> = () => {
       onSnapshot(q, (data) => {
         const list: any = [];
         data.forEach((doc) => {
-          console.log(doc.data().text, "doc");
           list.push({ ...doc.data(), id: doc.id });
         });
         setUserPosts(list);
@@ -72,16 +70,14 @@ export const Profile: FC<IProfile> = () => {
     }
   }, []);
 
-  
-
   return (
     <div className={styles.profile}>
-      {user.avatar ? (
+      {user.avatar !== null ? (
         <CardMedia
           component="img"
           height="190"
           width="100%"
-          image="https://i.pinimg.com/474x/59/fe/0a/59fe0ad8cdbe4314797b29e8f033384c.jpg"
+          image={user.avatar}
           className={styles.headerPicture}
           alt="header-picture"
         />
@@ -90,27 +86,15 @@ export const Profile: FC<IProfile> = () => {
       )}
       <div className={styles.first}>
         <div className={styles.avatarWrapper}>
-          {image !== null ? (
-            <Avatar
-              className={styles.avatar}
-              sx={{ width: 190, height: 190 }}
-              alt="imagePost"
-              src={
-                image !== null && image !== undefined
-                  ? URL.createObjectURL(
-                      image !== undefined || null ? image : ""
-                    )
-                  : ""
-              }
-            />
-          ) : (
-            <Avatar
-              className={styles.avatar}
-              sx={{ width: 190, height: 190 }}
-              alt="userAvatar"
-              src={user?.avatar && "/broken-image.jpg"}
-            />
-          )}
+          <Avatar
+            className={styles.avatar}
+            sx={{
+              width: width <= 920 ? 120 : 190,
+              height: width <= 920 ? 120 : 190,
+            }}
+            alt="userAvatar"
+            src={user.avatar !== null ? user.avatar : ""}
+          />
 
           <Button
             className={styles.button}
@@ -119,7 +103,7 @@ export const Profile: FC<IProfile> = () => {
             }}
             variant="outlined"
           >
-            {edit == true ? "cancel" : "Edit Profile"}
+            Edit Profile
           </Button>
         </div>
         <div className={styles.info}>
@@ -128,17 +112,23 @@ export const Profile: FC<IProfile> = () => {
           </p>
           <p className={styles.infoText}>
             Born
-            {user?.birthDate}
+            <span style={{ marginLeft: 8 }}>{user?.birthDate}</span>
           </p>
           <p className={styles.infoText}>
             Joined
-            {user.created}
+            <span style={{ marginLeft: 8 }}>{user.created}</span>
           </p>
           <span className={styles.infoText}>
-            <span style={{ fontWeight: "bold" }}>{user.following}</span> following
+            <span style={{ fontWeight: "bold", marginRight: 8 }}>
+              {user.following}
+            </span>{" "}
+            following
           </span>
           <span className={styles.infoText}>
-            <span style={{ fontWeight: "bold" }}>{user.followers}</span> followers
+            <span style={{ fontWeight: "bold", marginRight: 8 }}>
+              {user.followers}
+            </span>{" "}
+            followers
           </span>
         </div>
       </div>
@@ -169,16 +159,6 @@ export const Profile: FC<IProfile> = () => {
         </Tabs>
 
         <TabPanel value={value} index={0}>
-          {/* <Button
-            variant="outlined"
-            fullWidth
-            onClick={(e) => {
-              setOpenCreatePost(true);
-            }}
-          >
-            new post
-          </Button> */}
-
           <PostList posts={userPosts} />
         </TabPanel>
         <TabPanel value={value} index={1}>
@@ -187,14 +167,14 @@ export const Profile: FC<IProfile> = () => {
         <TabPanel value={value} index={2}>
           Item Three
         </TabPanel>
-      </div>{" "}
+      </div>
       <ProfileEdit
         setEdit={setEdit}
         edit={edit}
         image={image}
         setImage={setImage}
-      />{" "}
-      <Modal
+      />
+      {/* <Modal
         sx={{ zIndex: 200000 }}
         open={openCreatePost}
         onClose={() => setOpenCreatePost(false)}
@@ -212,7 +192,7 @@ export const Profile: FC<IProfile> = () => {
         >
           <FormPost setOpenCreatePost={setOpenCreatePost} />
         </Paper>
-      </Modal>
+      </Modal> */}
     </div>
   );
 };

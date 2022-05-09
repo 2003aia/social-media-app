@@ -1,5 +1,5 @@
 import "../App.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { auth, firestore } from "../firebase";
 import {
   Button,
@@ -20,6 +20,7 @@ import PersonIcon from "@mui/icons-material/Person";
 
 export const Sidebar = ({ visible, setVisible, open, setOpen }: any) => {
   const { height, width } = useWindowDimensions();
+  const navigate = useNavigate();
 
   const signOutHandler = (index: number) => {
     if (index == 2) auth.signOut();
@@ -35,51 +36,43 @@ export const Sidebar = ({ visible, setVisible, open, setOpen }: any) => {
           </ListItemIcon>
         </ListItem>
       </Toolbar>
-      <Link to="/">
-        <ListItem button key={"/"}>
-          <ListItemIcon>
-            <Home />
-          </ListItemIcon>
 
-          <ListItemText primary="Home" />
-        </ListItem>
-      </Link>
-      <Link to="/login">
-        <ListItem button key={"/login"}>
-          <ListItemIcon>
-            <ChatIcon />
-          </ListItemIcon>
+      <ListItem onClick={() => navigate("/")} button key={"/"}>
+        <ListItemIcon>
+          <Home />
+        </ListItemIcon>
 
-          <ListItemText primary="Messages" />
-        </ListItem>
-      </Link>
-      <Link to="/">
-        <ListItem button key={"/"}>
-          <ListItemIcon>
-            <BookmarksIcon />
-          </ListItemIcon>
+        <ListItemText primary="Home" />
+      </ListItem>
 
-          <ListItemText primary="Bookmarks" />
-        </ListItem>
-      </Link>
-      <Link to="/">
-        <ListItem button key={"/"}>
-          <ListItemIcon>
-            <FormatListBulletedIcon />
-          </ListItemIcon>
+      <ListItem onClick={() => navigate("/login")} button key={"/login"}>
+        <ListItemIcon>
+          <ChatIcon />
+        </ListItemIcon>
 
-          <ListItemText primary="Lists" />
-        </ListItem>
-      </Link>
-      <Link to="/profile">
-        <ListItem button key={"/profile"}>
-          <ListItemIcon>
-            <PersonIcon />
-          </ListItemIcon>
+        <ListItemText primary="Messages" />
+      </ListItem>
+      <ListItem onClick={() => navigate("/")} button key={"/"}>
+        <ListItemIcon>
+          <BookmarksIcon />
+        </ListItemIcon>
 
-          <ListItemText primary="Profile" />
-        </ListItem>
-      </Link>
+        <ListItemText primary="Bookmarks" />
+      </ListItem>
+      <ListItem onClick={() => navigate("/")} button key={"/"}>
+        <ListItemIcon>
+          <FormatListBulletedIcon />
+        </ListItemIcon>
+
+        <ListItemText primary="Lists" />
+      </ListItem>
+      <ListItem onClick={() => navigate("/profile")} button key={"/profile"}>
+        <ListItemIcon>
+          <PersonIcon />
+        </ListItemIcon>
+
+        <ListItemText primary="Profile" />
+      </ListItem>
 
       <ListItem>
         <Button variant="contained" color="primary" fullWidth>

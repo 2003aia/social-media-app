@@ -1,11 +1,13 @@
 import { useRef, useState } from "react";
 import { styled } from "@mui/material/styles";
-import { Clear, PanoramaVertical, Image } from "@mui/icons-material";
+import { Clear, PanoramaVertical } from "@mui/icons-material";
+import Image from "@mui/icons-material/Image";
 import {
   CircularProgress,
   TextField,
   CardMedia,
   IconButton,
+  Divider,
   Button,
   Avatar,
 } from "@mui/material";
@@ -23,12 +25,12 @@ const Input = styled("input")({
 export const FormPost = ({ setOpenCreatePost }: any) => {
   const user = useAppSelector((data: RootState) => data.post.user);
   const [image, setImage]: any = useState(null);
-  const formRef: any = useRef<HTMLHeadingElement>();
   const userData = Object(user);
   const [loading, setLoading] = useState(false);
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm();
   const uploadImage = async () => {
@@ -62,7 +64,6 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
       image_url = image;
     }
     if (auth.currentUser?.uid !== undefined) {
-      const id = auth.currentUser?.uid;
       const postRef = doc(collection(firestore, "posts"));
 
       await setDoc(postRef, {
@@ -74,6 +75,8 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
         avatar: userData?.avatar == undefined ? null : userData?.avatar,
         created: new Date().toISOString(),
       }).then(() => {
+        reset({text: ''});
+        setImage(null)
         setLoading(false);
         setOpenCreatePost(false);
       });
@@ -81,7 +84,7 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
   };
 
   return (
-    <div style={{ padding: 10 }}>
+    <div style={{ padding: 10, background: "#fff", color: "grey" }}>
       <div style={{ display: "flex", justifyContent: "space-evenly" }}>
         <Avatar
           sx={{ width: 50, height: 50 }}
@@ -89,6 +92,7 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
           src={userData?.avatar && "/broken-image.jpg"}
         />
         <TextField
+          sx={{ margin: "0 5px 10px" }}
           error={errors.text && true}
           maxRows={4}
           multiline={true}
@@ -99,11 +103,60 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
           label="text"
           placeholder="text"
         />
+      </div>
 
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+        }}
+      >
+        <label
+          style={{
+            width: "50px",
+            height: "50px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          htmlFor="contained-button-file2"
+        >
+          <Input
+            id="contained-button-file2"
+            name="file"
+            onChange={(e: any) => {
+              const files: any = e.target.files[0];
+
+              setImage(files);
+            }}
+            accept="image/*"
+            type="file"
+          />
+          <Image fontSize="large" />
+        </label>
+
+        {image !== null ? (
+          <div>
+            <div>
+              <IconButton onClick={() => setImage(null)}>
+                <Clear />
+              </IconButton>
+            </div>
+            <CardMedia
+              sx={{ borderRadius: 6, marginTop: 1 }}
+              component="img"
+              image={URL.createObjectURL(
+                image !== undefined && image !== null ? image : ""
+              )}
+              alt="postImage"
+            />
+          </div>
+        ) : null}
         {loading == true ? (
           <CircularProgress />
         ) : (
           <Button
+            sx={{ height: 40, display: 'flex', justifyContent: 'center' }}
             variant="contained"
             onClick={handleSubmit(createPost)}
           >
@@ -111,48 +164,7 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
           </Button>
         )}
       </div>
-      <label style={{ width: "100%" }} htmlFor="contained-button-file">
-        <Input
-          id="contained-button-file"
-          name="file"
-          onChange={(e: any) => {
-            const files: any = e.target.files[0];
-
-            setImage(files);
-          }}
-          accept="image/*"
-          type="file"
-        />
-        <IconButton color="inherit" component="span">
-          <Image />
-        </IconButton>
-      </label>
-      {image !== null ? (
-        <div
-          style={{
-            width: 300,
-            height: 300,
-            display: "flex",
-            justifyContent: "space-evenly",
-          }}
-        >
-          <CardMedia
-            sx={{ borderRadius: 6, marginTop: 1 }}
-            component="img"
-            image={
-              image !== null && image !== undefined
-                ? URL.createObjectURL(image !== undefined || null ? image : "")
-                : ""
-            }
-            alt="image"
-          />
-          <div>
-            <IconButton onClick={() => setImage(null)}>
-              <Clear />
-            </IconButton>
-          </div>
-        </div>
-      ) : null}
+      <Divider/>
     </div>
   );
 };

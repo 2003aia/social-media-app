@@ -20,23 +20,47 @@ import { TextField, Box } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { MobileDatePicker } from "@mui/x-date-pickers/MobileDatePicker";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
-import { ThemeProvider, createTheme } from "@mui/material";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
+
+const schema = yup
+  .object({
+    email: yup.string().email().required(),
+    password: yup.string().required().min(6),
+    name: yup.string().required(),
+  })
+
+const schema2 = yup
+  .object({
+    email: yup.string().email().required(),
+    password: yup.string().required().min(6),
+  })
+  .required();
 
 export const Signin = () => {
   const [loading, setLoading] = useState(false);
+  const [loading2, setLoading2] = useState(false);
+
+  const [error, setError] = useState(false);
   const [birthDate, setBirthDate] = useState<Date | null>(new Date());
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassSignup, setShowPassSignup] = useState(false);
+  const [showPassLogin, setShowPassLogin] = useState(false);
+
   const navigate = useNavigate();
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+  } = useForm({
+    resolver: yupResolver(schema),
+  });
   const {
     register: register2,
     formState: { errors: errors2 },
     handleSubmit: handleSubmit2,
-  } = useForm();
+  } = useForm({
+    resolver: yupResolver(schema2),
+  });
 
   const signInHandler = (data: any) => {
     setLoading(true);
@@ -53,13 +77,15 @@ export const Signin = () => {
           created: new Date().toISOString(),
           following: 0,
           followers: 0,
+          avatar: null,
         })
           .then(() => {
             setLoading(false);
-            navigate("/home/");
+            navigate("/");
           })
           .catch((err) => {
             setLoading(false);
+            setError(true);
             console.log(err);
           });
       }
@@ -67,15 +93,16 @@ export const Signin = () => {
   };
 
   const loginHandler = (data: any) => {
-    setLoading(true);
-    const { emailLogin, passwordLogin } = data;
-    signInWithEmailAndPassword(auth, emailLogin, passwordLogin)
+    setLoading2(true);
+    signInWithEmailAndPassword(auth, data.email, data.password)
       .then(() => {
         navigate("/");
-        setLoading(false);
+        setLoading2(false);
       })
       .catch((err: any) => {
-        setLoading(false);
+        setLoading2(false);
+        setError(true);
+
         console.log(err, "signed in error");
       });
   };
@@ -84,7 +111,7 @@ export const Signin = () => {
     <div
       style={{
         width: "100%",
-        height: "100vh",
+        height: "100%",
         margin: "auto",
         overflow: "auto",
       }}
@@ -93,7 +120,7 @@ export const Signin = () => {
         style={{
           margin: "auto",
           width: "228px",
-          height: "100vh",
+          height: "900px",
         }}
       >
         <Box
@@ -107,15 +134,19 @@ export const Signin = () => {
 
           <TextField
             variant="standard"
-            type={"email"}
+            type="email"
             label="Email"
             {...register("email", {
               required: true,
             })}
+            helperText={errors.email && "Заполните поле"}
+            error={errors.email && true}
           />
           <TextField
             variant="standard"
             label="Name"
+            helperText={errors.name && "Заполните поле"}
+            error={errors.name && true}
             {...register("name", {
               required: true,
             })}
@@ -133,32 +164,32 @@ export const Signin = () => {
             />
           </LocalizationProvider>
 
-          <FormControl sx={{ m: 1, width: "25ch" }} variant="standard">
-            <InputLabel htmlFor="standard-adornment-password">
-              Password
-            </InputLabel>
-            <Input
-              id="standard-adornment-password"
-              type={showPassword ? "text" : "password"}
-              {...register("password", {
-                required: true,
-                minLength: 6,
-              })}
-              endAdornment={
+          <TextField
+            id="standard-adornment-password"
+            type={showPassSignup ? "text" : "password"}
+            {...register("password", {
+              required: true,
+              minLength: 6,
+            })}
+            label="Password"
+            variant="standard"
+            helperText={errors.password && "Заполните минимум 6 символов."}
+            error={errors.password && true}
+            InputProps={{
+              endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
                     aria-label="toggle password visibility"
-                    onClick={() => setShowPassword(true)}
-                    onMouseDown={() => setShowPassword(false)}
+                    onClick={() => setShowPassSignup(true)}
+                    onMouseDown={() => setShowPassSignup(false)}
                     edge="end"
                   >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                    {showPassSignup ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
-              }
-            />
-            {}
-          </FormControl>
+              ),
+            }}
+          />
 
           {loading ? (
             <CircularProgress />
@@ -184,28 +215,50 @@ export const Signin = () => {
         >
           <h3 style={{ marginTop: 30 }}>Login</h3>
           <TextField
-            {...register2("emailLogin")}
+            {...register2("email")}
             label="Email"
+            type="email"
+            helperText={errors2.email && "Заполните поле."}
             variant="standard"
+            error={errors2.email && true}
           />
+
           <TextField
-            {...register2("passwordLogin", {
-              required: true,
-              minLength: 6,
-              maxLength: 10,
-            })}
             label="Password"
+            id="standard-adornment-password2"
+            type={showPassLogin ? "text" : "password"}
+            {...register2("password")}
+            helperText={errors2.password && "Заполните минимум 6 символов."}
+            error={errors2.password && true}
             variant="standard"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={() => setShowPassLogin(true)}
+                    onMouseDown={() => setShowPassLogin(false)}
+                    edge="end"
+                  >
+                    {showPassLogin ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
-          <Button
-            sx={{ m: 1, width: "27ch" }}
-            onClick={handleSubmit2(loginHandler)}
-            variant="outlined"
-            type="submit"
-            fullWidth
-          >
-            submit
-          </Button>
+          {loading2 ? (
+            <CircularProgress />
+          ) : (
+            <Button
+              sx={{ m: 1, width: "27ch" }}
+              onClick={handleSubmit2(loginHandler)}
+              variant="outlined"
+              type="submit"
+              fullWidth
+            >
+              submit
+            </Button>
+          )}
         </Box>
       </div>
     </div>

@@ -4,7 +4,7 @@ import "../App.css";
 import { auth, firestore } from "../firebase";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
-import PostList from "./PostList";
+import {PostList} from "./PostList";
 import {
   collection,
   limit,
@@ -19,18 +19,9 @@ import { Search, Clear } from "@mui/icons-material";
 import { useWindowDimensions } from "../hooks/window";
 import "./Sidebar.css";
 
-export const SidebarWidgets = ({
-  index,
-  currentId,
-  posts,
-}: {
-  index?: number;
-  currentId?: number;
-  posts: Array<TPost>;
-}) => {
+export const SidebarWidgets = () => {
   const [text, setText] = useState<string>("");
   const [posts2, setPosts2] = useState<Array<TPost>>([]);
-  const { height, width } = useWindowDimensions();
   useEffect(() => {
     const q = query(
       collection(firestore, "posts"),
@@ -42,10 +33,8 @@ export const SidebarWidgets = ({
     onSnapshot(q, (data) => {
       const list: any = [];
       data.forEach((doc) => {
-        console.log(doc.data().text, "doc");
         list.push({ ...doc.data(), id: doc.id });
       });
-      console.log(list, "list");
       setPosts2(list);
     });
   }, [text]);
@@ -88,9 +77,7 @@ export const SidebarWidgets = ({
       </ListItem>
       <div className="sidebarWidgets-main">
         {posts2.length > 0 ? (
-          <ListItem>
             <PostList posts={posts2} />
-          </ListItem>
         ) : (
           <p>type something...</p>
         )}

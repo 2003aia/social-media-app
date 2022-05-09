@@ -1,4 +1,4 @@
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import IconButton, { IconButtonProps } from "@mui/material/IconButton";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import moment from "moment";
@@ -8,11 +8,18 @@ import {
   deleteDoc,
   doc,
   setDoc,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
   arrayRemove,
+  getDocs,
+  collection,
+  writeBatch,
 } from "@firebase/firestore";
 import { getStorage, ref, deleteObject } from "firebase/storage";
 
-import { CircularProgress } from "@mui/material";
+import { CircularProgress, Divider } from "@mui/material";
 import { CommentList } from "./CommentList";
 import { TPost } from ".././types/types";
 import ListItem from "@mui/material/ListItem";
@@ -26,9 +33,7 @@ import { CardActionArea, CardActions } from "@mui/material";
 import ChatBubbleIcon from "@mui/icons-material/ChatBubble";
 import ShareIcon from "@mui/icons-material/Share";
 import { auth, firestore, storage } from "../firebase";
-interface ExpandMoreProps extends IconButtonProps {
-  expand: boolean;
-}
+import { useAppSelector } from "../redux/hooks";
 interface iPost {
   post: TPost;
 }
@@ -36,7 +41,31 @@ interface iPost {
 const Post: FC<iPost> = ({ post }) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const handleOpen = () => setOpen(true);
+  const [comments, setComments] = useState([]);
+  const handleOpen = () => {
+    const fetchComments = async () => {
+      const q = query(
+        collection(firestore, `posts/${post.id}/comments`),
+        orderBy("created", "desc"),
+        limit(10)
+      );
+
+      onSnapshot(q, (data) => {
+        const list: any = [];
+        data.forEach((doc) => {
+          list.push({ ...doc.data(), id: doc.id, post: post });
+        });
+        setComments(list);
+      });
+    };
+    if (open === false) {
+      fetchComments();
+      setOpen(true);
+    } else {
+      setOpen(false);
+    }
+  };
+  const { user } = useAppSelector((data) => data.post);
   const [error, setError] = useState(false);
   const likeOrDelete = post?.likes?.find(
     (d: any) => d == auth.currentUser?.uid
@@ -44,32 +73,41 @@ const Post: FC<iPost> = ({ post }) => {
 
   const deletePostHandler = async () => {
     setLoading(true);
+
     if (post.user_id !== null || undefined) {
       const storageRef = ref(
         storage,
         `files/${auth.currentUser?.uid}/${post.image_name}`
       );
 
-      if (post.image_name !== '') {
-         await deleteObject(storageRef)
-        .then(async () => {
-          setLoading(false);
-        })
-        .catch(() => {
-          setLoading(false);
-          setError(true);
-        });
+      if (post.image_name !== "") {
+        await deleteObject(storageRef)
+          .then(async () => {
+            setLoading(false);
+          })
+          .catch(() => {
+            setLoading(false);
+            setError(true);
+          });
       }
-     
-      await deleteDoc(doc(firestore, "posts", post?.id))
-        .then(() => {
-          setLoading(false);
+      let batch = writeBatch(firestore);
+      await getDocs(collection(firestore, `posts/${post.id}/comments`))
+        .then((val) => {
+          val.forEach((d) => {
+            batch.delete(d.ref);
+          });
+          batch.commit();
         })
-        .catch(() => {
-          setLoading(false);
-          setError(true);
+        .then(async () => {
+          await deleteDoc(doc(firestore, "posts", post?.id))
+            .then(() => {
+              setLoading(false);
+            })
+            .catch(() => {
+              setLoading(false);
+              setError(true);
+            });
         });
-      
     }
   };
 
@@ -100,6 +138,8 @@ const Post: FC<iPost> = ({ post }) => {
       alignItems="flex-start"
       style={{
         marginBottom: 5,
+        /* display: 'flex',
+        flexDirection: 'column', */
         borderBottom: "2px solid #fff",
       }}
     >
@@ -109,7 +149,7 @@ const Post: FC<iPost> = ({ post }) => {
       <ListItemText
         primary={post.author_nickname}
         secondary={
-          <React.Fragment>
+          <>
             <Stack spacing={2} sx={{ maxWidth: 600 }}>
               {moment(post?.created).fromNow()}
             </Stack>
@@ -162,10 +202,18 @@ const Post: FC<iPost> = ({ post }) => {
                 ) : null}
               </CardActions>
             </Typography>
-          </React.Fragment>
+            <div style={{ marginLeft: -20 }}>
+              <CommentList
+                comments={comments}
+                open={open}
+                setOpen={setOpen}
+                id={post?.id}
+                post={post}
+              />
+            </div>
+          </>
         }
       />
-      <CommentList open={open} setOpen={setOpen} id={post?.id} post={post} />
     </ListItem>
   );
 };

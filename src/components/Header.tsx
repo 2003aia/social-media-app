@@ -3,19 +3,11 @@ import "./Header.css";
 
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-
+import { useLocation } from "react-router-dom";
 import { useWindowDimensions } from "../hooks/window";
 
 export const Header = () => {
-  const { height, width } = useWindowDimensions();
-
-  const [visible, setVisible] = useState<boolean>(false);
-
-  const [anchorEl, setAnchorEl] = useState(null);
-
-  const handleProfileMenuOpen = (event: any) => {
-    setAnchorEl(event.currentTarget);
-  };
+  const location = useLocation();
 
   return (
     <div className="header">
@@ -32,7 +24,13 @@ export const Header = () => {
         }}
       >
         <Typography variant="h6" component="div">
-          Home
+          {location.pathname === "/"
+            ? "HOME"
+            : "profile"
+            ? "PROFILE"
+            : "login"
+            ? "LOGIN"
+            : ""}
         </Typography>
       </Toolbar>
     </div>

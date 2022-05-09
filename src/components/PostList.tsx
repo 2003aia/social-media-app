@@ -1,10 +1,15 @@
 import { List, Toolbar } from "@mui/material";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, FC } from "react";
 import Post from "./Post";
 import { TPost } from ".././types/types";
 import { FormPost } from "./FormPost";
 
-export default function PostList({ posts }: { posts: Array<TPost> }) {
+
+interface iPostList {
+  posts: Array<TPost>;
+}
+
+export const PostList: FC<iPostList> = ({ posts }) => {
   return (
     <div
       style={{
@@ -15,10 +20,10 @@ export default function PostList({ posts }: { posts: Array<TPost> }) {
     >
       <FormPost />
       <List sx={{ paddingBottom: 7 }}>
-        {posts?.map((post: any) => (
-          <Post post={post} />
+        {posts?.map((post: TPost) => (
+          <Post post={post} key={post.created} />
         ))}
       </List>
     </div>
   );
-}
+};

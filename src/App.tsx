@@ -1,11 +1,12 @@
 import React, { useState, useEffect, Fragment } from "react";
 import { auth, db, firestore } from "./firebase";
-import PostList from "./components/PostList";
+import { PostList } from "./components/PostList";
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import Toolbar from "@mui/material/Toolbar";
-
 import { Signin } from "./components/Signin";
 import { Sidebar } from "./components/Sidebar";
+import { BottomNav } from "./components/BottomNav";
+import "./App.css";
 import { SidebarWidgets } from "./components/SidebarWidgets";
 import { Profile } from "./components/Profile";
 import {
@@ -17,58 +18,44 @@ import {
   orderBy,
   query,
 } from "@firebase/firestore";
-import { useDispatch } from "react-redux";
-import { postData } from "./redux/post";
+import { useDispatch, useSelector } from "react-redux";
+import { postData, setRefresh } from "./redux/post";
 import MessageList from "./components/MessageList";
 import { useWindowDimensions } from "./hooks/window";
 import { Header } from "./components/Header";
+import { useAppSelector } from "./redux/hooks";
+import { Home } from "./components/Home";
 
 function App() {
-  const [currentId, setCurrentId] = useState<number>(3);
+  const { width } = useWindowDimensions();
   const [index, setIndex] = useState<number>(0);
-  const { height, width } = useWindowDimensions();
   const [posts, setPosts] = useState([]);
+  const { refresh, user } = useAppSelector((data) => data.post);
   const [visible, setVisible] = useState<boolean>(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const fetchUser = async () => {
+    const id = auth.currentUser?.uid;
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      const q = query(
-        collection(firestore, "posts"),
-        orderBy("created", "desc"),
-        limit(10)
-      );
-
-      onSnapshot(q, (data) => {
-        const list: any = [];
-        data.forEach((doc) => {
-          list.push({ ...doc.data(), id: doc.id });
-        });
-        setPosts(list);
-      });
-    };
-
-    const fetchUser = async () => {
-      if (auth.currentUser?.uid !== undefined) {
-        const id = auth.currentUser?.uid;
-        const userDoc = doc(firestore, "users", id);
-
-        const userSnap: any = await getDoc(userDoc);
-        
-        if (userSnap.exists()) {
-          dispatch(postData(userSnap.data())
-        }
+    onSnapshot(doc(firestore, "users", `${id}`), (doc): any => {
+      const { created, birthDate }: any = doc?.data();
+      let birthVal = new Date(birthDate).toDateString();
+      let createdVal = new Date(created).toDateString();
+      if (doc.exists()) {
+        dispatch(
+          postData({
+            ...doc.data(),
+            birthDate: birthVal,
+            created: createdVal,
+          })
+        );
       }
-    };
-
-
-    fetchPosts();
-    fetchUser();
-  }, [auth.currentUser?.uid]);
+    });
+  };
 
   useEffect(() => {
     if (auth.currentUser !== null) {
+      fetchUser();
       navigate("/");
     } else {
       navigate("/login");
@@ -76,33 +63,14 @@ function App() {
   }, [auth.currentUser]);
 
   return (
-    <div
-      style={{
-        width: "100%",
-        minWidth: 300,
-        maxWidth: 1300,
-        margin: "auto",
-        display: "flex",
-        height: "100vh",
-        overflow: "hidden",
-      }}
-    >
+    <div className="app">
       <Sidebar visible={visible} setVisible={setVisible} />
 
-      <div
-        style={{
-          width: "100%",
-          minWidth: 300,
-          maxWidth: 800,
-          height: "100%",
-          overflow: "hidden",
-          background: "#eee",
-        }}
-      >
+      <div className="main">
         <Header />
         <Toolbar />
         <Routes>
-          <Route path="/" element={<PostList posts={posts} />} />
+          <Route path="/" element={<Home />} />
 
           <Route element={<Signin />} path="/login" />
           <Route element={<Profile posts={posts} />} path="/profile" />
@@ -110,7 +78,8 @@ function App() {
         </Routes>
       </div>
 
-      <SidebarWidgets posts={posts} currentId={currentId} index={index} />
+      <SidebarWidgets />
+      <BottomNav />
     </div>
   );
 }

@@ -1,30 +1,37 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit"
-import {TUser} from '../types/types'
-
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { TUser, TPost } from "../types/types";
 
 export interface PostState {
-    colors: any,
-    index: number,
-    user: TUser;
-
+  index: number;
+  user: TUser;
+  refresh: boolean;
+  posts: Array<TPost>;
 }
+
+
 const initialState: PostState = {
-    colors: [
-        'black', 'pink', 'red', 'orange', 'yellow', 'olive', 'green', 'teal', 'blue', 'violet', 'purple', 'brown'
-    ],
-    index: 0,
-    user: {}
-}
+  index: 0,
+  user: {},
+  posts: [],
+  refresh: false,
+};
 
- const post = createSlice({
-    name: 'post', 
-    initialState,
-    reducers: {
-        postData: (state, action: PayloadAction<TUser>) =>{
-            state.user = action.payload
-        },
+const post = createSlice({
+  name: "post",
+  initialState,
+  reducers: {
+    postData: (state, action: PayloadAction<TUser>) => {
+      state.user = action.payload;
+    },
+    setRefresh: (state, action: PayloadAction<boolean>)=>{
+        state.refresh = action.payload;
+    },
+    setPosts: (state, action: PayloadAction<Array<TPost>>) =>{
+      state.posts = action.payload;
     }
-})
+  },
+ 
+});
 
 /* export function post(state = initialState, action: any) {
     switch (action.type) {
@@ -39,10 +46,6 @@ const initialState: PostState = {
     }
 } */
 
+export const { postData, setRefresh } = post.actions;
 
-export const { postData } = post.actions
-
-export default post.reducer
-
-
-
+export default post.reducer;

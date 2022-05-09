@@ -12,7 +12,7 @@ import {
 import React, { useState, useEffect, FC } from "react";
 import Post from "./Post";
 
-import { TPost } from "../types/types";
+import { TComment, TPost } from "../types/types";
 import {
   collection,
   doc,
@@ -33,16 +33,16 @@ import { useAppSelector } from "../redux/hooks";
 import CheckIcon from "@mui/icons-material/Check";
 import EditIcon from "@mui/icons-material/Edit";
 import { useForm } from "react-hook-form";
+import { ConnectingAirportsOutlined } from "@mui/icons-material";
 
 const style = {
-  position: "absolute" as "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 400,
-  bgcolor: "background.paper",
-  boxShadow: 24,
-  p: 4,
+  width: "100%",
+
+  height: "100%",
+
+  bgcolor: "#eee",
+  boxShadow: 0,
+  p: 1,
 };
 
 interface iCommentList {
@@ -50,35 +50,25 @@ interface iCommentList {
   setOpen: (open: boolean) => void;
   id: string;
   post: TPost;
+  comments: Array<TComment>;
 }
 
-export const CommentList: FC<iCommentList> = ({ open, setOpen, id, post }) => {
-  const handleOpen = () => setOpen(true);
+export const CommentList: FC<iCommentList> = ({
+  open,
+  setOpen,
+  id,
+  post,
+  comments,
+}) => {
   const handleClose = () => setOpen(false);
-  const [comments, setComments] = useState([]);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState({ message: "" });
   const user = useAppSelector((data) => data.post.user);
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm();
-
-  useEffect(() => {
-    const q = query(
-      collection(firestore, `posts/${post.id}/comments`),
-      /* orderBy('createdAt', 'desc'), */ limit(10)
-    );
-
-    onSnapshot(q, (data) => {
-      const list: any = [];
-      data.forEach((doc) => {
-        console.log(doc.data().text, "doc");
-        list.push({ ...doc.data(), id: doc.id, post: post });
-      });
-      setComments(list);
-    });
-  }, []);
 
   const newCommentHandler = async (data: any) => {
     const mesRef = doc(collection(firestore, `posts/${post.id}/comments`));
@@ -89,37 +79,30 @@ export const CommentList: FC<iCommentList> = ({ open, setOpen, id, post }) => {
       author_nickname: user.name,
       message: data.message,
       created: new Date().toISOString(),
+    }).then(() => {
+      reset({ message: "" });
     });
     await updateDoc(postRef, {
       totalMessages: increment(1),
-    }).then(() => setMessage(""));
+    });
   };
 
   return (
-    <div
-      style={{
-        marginTop: 30,
-        display: "flex",
-        flexWrap: "wrap",
-        justifyContent: "space-evenly",
-        overflow: "auto",
-        alignItems: "start",
-      }}
-    >
-      <Modal
-        open={open}
-        sx={{ zIndex: 200000 }}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
+    /*  <Modal
+      open={open}
+      sx={{ zIndex: 200000 }}
+      onClose={handleClose}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description"
+    > */
+    <>
+      {open && (
         <Paper sx={style}>
-          <Post post={post} />
+          {/* <Post post={post} /> */}
           <div
             style={{
               display: "flex",
               justifyContent: "space-evenly",
-              marginBottom: 20,
             }}
           >
             <TextField
@@ -138,6 +121,7 @@ export const CommentList: FC<iCommentList> = ({ open, setOpen, id, post }) => {
               style={{ marginLeft: 10 }}
               label="new comment"
               variant="standard"
+              placeholder="Comment"
               helperText={errors.message && "заполните поле"}
             />
 
@@ -146,22 +130,19 @@ export const CommentList: FC<iCommentList> = ({ open, setOpen, id, post }) => {
             </IconButton>
           </div>
           <List
-            sx={{
-              width: "100%",
-              maxWidth: 360,
+          /*  sx={{
               bgcolor: "background.paper",
-              marginTop: -2,
-            }}
+              
+            }} */
           >
-            {comments.map((comment) => (
-              <Comment comment={comment} post={post} />
+            {comments.map((comment: TComment) => (
+              <Comment key={comment?.created} comment={comment} post={post} />
             ))}
           </List>
         </Paper>
-      </Modal>
-      {/*   {posts?.map((post: any) => (
-      <Post post={post} />
-    ))} */}
-    </div>
+      )}
+    </>
+
+    /*   </Modal> */
   );
 };
