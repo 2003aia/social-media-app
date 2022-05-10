@@ -3,7 +3,7 @@ export type TPost = {
   text?: string;
   likes: Array<string>;
   created: string;
-  author_nickname: string;
+  author_name: string;
   image_name?: string;
   image_url?: string;
   user_id: string;
@@ -18,6 +18,7 @@ export type TUser = {
   avatar?: string;
   created?: string;
   following?: number;
+  id?: string;
   followers?: number;
 };
 

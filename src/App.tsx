@@ -28,7 +28,6 @@ import { Home } from "./components/Home";
 
 function App() {
   const { width } = useWindowDimensions();
-  const [index, setIndex] = useState<number>(0);
   const [posts, setPosts] = useState([]);
   const { refresh, user } = useAppSelector((data) => data.post);
   const [visible, setVisible] = useState<boolean>(false);
@@ -45,6 +44,7 @@ function App() {
         dispatch(
           postData({
             ...doc.data(),
+            id: doc.id,
             birthDate: birthVal,
             created: createdVal,
           })
@@ -73,7 +73,7 @@ function App() {
           <Route path="/" element={<Home />} />
 
           <Route element={<Signin />} path="/login" />
-          <Route element={<Profile posts={posts} />} path="/profile" />
+          <Route element={<Profile />} path="/profile" />
           <Route element={<MessageList />} path="/messages" />
         </Routes>
       </div>

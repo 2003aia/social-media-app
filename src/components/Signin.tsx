@@ -75,8 +75,8 @@ export const Signin = () => {
           name: name,
           birthDate: birthDate?.toISOString(),
           created: new Date().toISOString(),
-          following: 0,
-          followers: 0,
+          following: [],
+          followers: [],
           avatar: null,
         })
           .then(() => {

@@ -34,6 +34,8 @@ import ChatBubbleIcon from "@mui/icons-material/ChatBubble";
 import ShareIcon from "@mui/icons-material/Share";
 import { auth, firestore, storage } from "../firebase";
 import { useAppSelector } from "../redux/hooks";
+import { useNavigate } from "react-router-dom";
+
 interface iPost {
   post: TPost;
 }
@@ -42,6 +44,7 @@ const Post: FC<iPost> = ({ post }) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [comments, setComments] = useState([]);
+  const navigate = useNavigate();
   const handleOpen = () => {
     const fetchComments = async () => {
       const q = query(
@@ -138,16 +141,18 @@ const Post: FC<iPost> = ({ post }) => {
       alignItems="flex-start"
       style={{
         marginBottom: 5,
-        /* display: 'flex',
-        flexDirection: 'column', */
         borderBottom: "2px solid #fff",
       }}
     >
-      <ListItemAvatar>
+      <ListItemAvatar
+        onClick={() => {
+          navigate("/profile", { state: { id: post.user_id } });
+        }}
+      >
         <Avatar alt="avatar" src={post.avatar} />
       </ListItemAvatar>
       <ListItemText
-        primary={post.author_nickname}
+        primary={post.author_name}
         secondary={
           <>
             <Stack spacing={2} sx={{ maxWidth: 600 }}>

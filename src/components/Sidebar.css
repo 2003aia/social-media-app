@@ -26,7 +26,8 @@
   font-size: 19;
   color: #c6cccf;
   font-weight: bold;
-  padding: 10px;
+  height: 100%;
+  border-left: #ffffff 3px solid;
 }
 @media (max-width: 800px) {
     .sidebar{

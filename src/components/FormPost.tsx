@@ -75,8 +75,8 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
         avatar: userData?.avatar == undefined ? null : userData?.avatar,
         created: new Date().toISOString(),
       }).then(() => {
-        reset({text: ''});
-        setImage(null)
+        reset({ text: "" });
+        setImage(null);
         setLoading(false);
         setOpenCreatePost(false);
       });
@@ -84,7 +84,15 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
   };
 
   return (
-    <div style={{ padding: 10, background: "#fff", color: "grey" }}>
+    <div
+      style={{
+        padding: 10,
+        background: "#fff",
+        color: "grey",
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+      }}
+    >
       <div style={{ display: "flex", justifyContent: "space-evenly" }}>
         <Avatar
           sx={{ width: 50, height: 50 }}
@@ -156,7 +164,7 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
           <CircularProgress />
         ) : (
           <Button
-            sx={{ height: 40, display: 'flex', justifyContent: 'center' }}
+            sx={{ height: 40, display: "flex", justifyContent: "center" }}
             variant="contained"
             onClick={handleSubmit(createPost)}
           >
@@ -164,7 +172,6 @@ export const FormPost = ({ setOpenCreatePost }: any) => {
           </Button>
         )}
       </div>
-      <Divider/>
     </div>
   );
 };

@@ -11,6 +11,7 @@ export function TabPanel(props: TabPanelProps) {
   return (
     <div
       role="tabpanel"
+      style={{background: '#eee'}}
       hidden={value !== index}
       id={`simple-tabpanel-${index}`}
       aria-labelledby={`simple-tab-${index}`}

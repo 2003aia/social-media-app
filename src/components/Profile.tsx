@@ -8,12 +8,11 @@ import {
   Tab,
 } from "@mui/material";
 import React, { FC, useEffect, useState } from "react";
-import {PostList} from "./PostList";
+import { PostList } from "./PostList";
 import PersonPinIcon from "@mui/icons-material/PersonPin";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import TextsmsOutlinedIcon from "@mui/icons-material/TextsmsOutlined";
 import { auth, firestore } from "../firebase";
-import { FormPost } from "./FormPost";
 import {
   collection,
   doc,
@@ -31,15 +30,15 @@ import { useAppSelector } from "../redux/hooks";
 import styles from "./Profile.module.css";
 import { TabPanel } from "./ProfileTabPanel";
 import { useWindowDimensions } from "../hooks/window";
+import { useLocation } from "react-router-dom";
+import { TUser } from "../types/types";
 
-interface iPosts {
-  text: string;
+interface IProfile {}
+
+type TLocation = {
   id: string;
-}
+};
 
-interface IProfile {
-  posts: Array<iPosts>;
-}
 export const Profile: FC<IProfile> = () => {
   const [value, setValue] = useState(0);
   const [edit, setEdit] = useState(false);
@@ -48,26 +47,48 @@ export const Profile: FC<IProfile> = () => {
   };
   const { height, width } = useWindowDimensions();
   const [userPosts, setUserPosts] = useState([]);
-  const user = useAppSelector((data) => data.post.user);
+  const location = useLocation().state as TLocation;
+  const [user, setUser] = useState<TUser>({});
+  const userSelector = useAppSelector((data) => data.post.user);
 
   const [image, setImage]: any = useState(null);
-  useEffect(() => {
-    if (auth?.currentUser?.uid !== undefined) {
-      const q = query(
-        collection(firestore, "posts"),
-        where("user_id", "==", auth.currentUser?.uid),
-        orderBy("created", "desc"),
-        limit(10)
-      );
 
-      onSnapshot(q, (data) => {
-        const list: any = [];
-        data.forEach((doc) => {
-          list.push({ ...doc.data(), id: doc.id });
-        });
-        setUserPosts(list);
+  const fetchUserPosts = () => {
+    if (auth?.currentUser?.uid == undefined) return;
+    const q = query(
+      collection(firestore, "posts"),
+      where("user_id", "==", auth.currentUser?.uid),
+      orderBy("created", "desc"),
+      limit(10)
+    );
+
+    onSnapshot(q, (data) => {
+      const list: any = [];
+      data.forEach((doc) => {
+        list.push({ ...doc.data(), id: doc.id });
       });
+      setUserPosts(list);
+    });
+  };
+
+  const fetchUser = async () => {
+    if (location === null) {
+      setUser(userSelector);
+    } else {
+      if (location.id === userSelector.id) {
+        setUser(userSelector);
+      } else {
+        const userRef = doc(firestore, "users", location.id);
+        const userData = await getDoc(userRef);
+        if (!userData.exists()) return;
+        setUser(userData.data());
+      }
     }
+  };
+
+  useEffect(() => {
+    fetchUserPosts();
+    fetchUser();
   }, []);
 
   return (
